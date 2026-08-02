@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Generated screenshots
+screenshots/
+
+# Logs
+logs/
+
+# Build output
+dist/
