@@ -45,7 +45,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t ${IMAGE_NAME}:latest .
+                docker build -t $IMAGE_NAME:latest .
                 '''
             }
         }
@@ -53,8 +53,8 @@ pipeline {
         stage('Stop Old Container') {
             steps {
                 sh '''
-                docker stop ${CONTAINER_NAME} || true
-                docker rm ${CONTAINER_NAME} || true
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
                 '''
             }
         }
@@ -63,9 +63,9 @@ pipeline {
             steps {
                 sh '''
                 docker run -d \
-                    --name ${CONTAINER_NAME} \
-                    -p 3001:3000 \
-                    ${IMAGE_NAME}:latest
+                  --name $CONTAINER_NAME \
+                  -p 3001:3000 \
+                  $IMAGE_NAME:latest
                 '''
             }
         }
@@ -73,8 +73,17 @@ pipeline {
         stage('Health Check') {
             steps {
                 sh '''
+                echo "Waiting for application to start..."
                 sleep 10
-                curl http://host.docker.internal:3001/health
+
+                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://host.docker.internal:3001/api/health)
+
+                if [ "$STATUS" != "200" ]; then
+                    echo "Application health check failed with HTTP $STATUS"
+                    exit 1
+                fi
+
+                echo "Application is healthy."
                 '''
             }
         }
