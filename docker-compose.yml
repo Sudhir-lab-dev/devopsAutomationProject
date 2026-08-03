@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  automation-app:
+    build: .
+    container_name: automation-app
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./screenshots:/app/screenshots
+      - ./logs:/app/logs
+
+    restart: unless-stopped

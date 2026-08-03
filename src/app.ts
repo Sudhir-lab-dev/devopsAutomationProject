@@ -6,7 +6,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/", healthRoutes);
+app.use("/api", healthRoutes);
 app.use("/api/automation", automationRoutes);
 
 export default app;
