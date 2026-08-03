@@ -36,6 +36,12 @@ pipeline {
             }
         }
 
+        stage('ESLint') {
+            steps {
+                sh 'npm run lint'
+            }
+        }
+
         stage('Build TypeScript') {
             steps {
                 sh 'npm run build'

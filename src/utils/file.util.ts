@@ -17,18 +17,13 @@ export function getScreenshotPath(): {
   filePath: string;
   createdAt: Date;
 } {
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[:.]/g, "-");
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
   const uniqueId = crypto.randomUUID();
 
   const fileName = `${timestamp}-${uniqueId}.png`;
 
-  const filePath = path.join(
-    SCREENSHOT_DIRECTORY,
-    fileName
-  );
+  const filePath = path.join(SCREENSHOT_DIRECTORY, fileName);
 
   return {
     fileName,

@@ -3,6 +3,6 @@ import { config } from "./config/env";
 
 app.listen(config.port, () => {
   console.log(
-    `🚀 ${config.appName} running on http://localhost:${config.port}`
+    `🚀 ${config.appName} running on http://localhost:${config.port}`,
   );
 });

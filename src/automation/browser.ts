@@ -7,10 +7,7 @@ export async function launchBrowser(): Promise<Browser> {
       width: 1366,
       height: 768,
     },
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox"
-    ]
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   return browser;
