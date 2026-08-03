@@ -7,7 +7,9 @@
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "NodeNext",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "jest"],
+    "isolatedModules": true
   },
   "include": ["src"]
 }
