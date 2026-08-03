@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         APP_NAME = 'automation-devops-project'
+        IMAGE_NAME = 'automation-devops-project'
+        CONTAINER_NAME = 'automation-devops-app'
     }
 
     options {
@@ -28,21 +30,6 @@ pipeline {
             }
         }
 
-        stage('Verify Docker Access') {
-            steps {
-                sh '''
-            echo "=== Docker Version ==="
-            docker --version
-
-            echo "=== Docker Containers ==="
-            docker ps
-
-            echo "=== Docker Images ==="
-            docker images
-        '''
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
                 sh 'npm ci'
@@ -54,15 +41,52 @@ pipeline {
                 sh 'npm run build'
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                docker build -t ${IMAGE_NAME}:latest .
+                '''
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                sh '''
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
+                '''
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                docker run -d \
+                    --name ${CONTAINER_NAME} \
+                    -p 3001:3000 \
+                    ${IMAGE_NAME}:latest
+                '''
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                sleep 10
+                curl http://host.docker.internal:3001/health
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo '✅ Build completed successfully.'
+            echo '✅ Docker Deployment Successful'
         }
 
         failure {
-            echo '❌ Build failed.'
+            echo '❌ Deployment Failed'
         }
 
         always {
