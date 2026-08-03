@@ -11,7 +11,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -29,6 +28,21 @@ pipeline {
             }
         }
 
+        stage('Verify Docker Access') {
+            steps {
+                sh '''
+            echo "=== Docker Version ==="
+            docker --version
+
+            echo "=== Docker Containers ==="
+            docker ps
+
+            echo "=== Docker Images ==="
+            docker images
+        '''
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
                 sh 'npm ci'
@@ -40,17 +54,15 @@ pipeline {
                 sh 'npm run build'
             }
         }
-
     }
 
     post {
-
         success {
-            echo "✅ Build completed successfully."
+            echo '✅ Build completed successfully.'
         }
 
         failure {
-            echo "❌ Build failed."
+            echo '❌ Build failed.'
         }
 
         always {
