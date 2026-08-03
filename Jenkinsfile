@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         APP_NAME = 'automation-devops-project'
-        NODE_ENV = 'production'
     }
 
     options {
