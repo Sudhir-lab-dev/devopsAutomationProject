@@ -5,6 +5,7 @@ pipeline {
         APP_NAME = 'automation-devops-project'
         IMAGE_NAME = 'automation-devops-project'
         CONTAINER_NAME = 'automation-devops-app'
+        SONAR_SCANNER = tool 'SonarScanner'
     }
 
     options {
@@ -54,6 +55,16 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                $SONAR_SCANNER/bin/sonar-scanner
+            '''
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -75,9 +86,9 @@ pipeline {
             steps {
                 sh '''
                 docker run -d \
-                  --name $CONTAINER_NAME \
-                  -p 3001:3000 \
-                  $IMAGE_NAME:latest
+                    --name $CONTAINER_NAME \
+                    -p 3001:3000 \
+                    $IMAGE_NAME:latest
                 '''
             }
         }
