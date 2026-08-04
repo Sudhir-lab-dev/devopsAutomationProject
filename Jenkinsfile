@@ -55,6 +55,22 @@ pipeline {
             }
         }
 
+        stage('Publish Test Results') {
+            steps {
+                junit 'reports/junit/junit.xml'
+            }
+        }
+
+        stage('Publish Coverage') {
+            steps {
+                recordCoverage(
+            tools: [
+                llvmCov(pattern: 'coverage/lcov.info')
+            ]
+        )
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
