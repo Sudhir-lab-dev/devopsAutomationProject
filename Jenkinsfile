@@ -61,16 +61,6 @@ pipeline {
             }
         }
 
-        stage('Publish Coverage') {
-            steps {
-                recordCoverage(
-            tools: [
-                llvmCov(pattern: 'coverage/lcov.info')
-            ]
-        )
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
