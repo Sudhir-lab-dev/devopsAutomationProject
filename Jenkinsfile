@@ -5,6 +5,7 @@ pipeline {
         APP_NAME = 'automation-devops-project'
         IMAGE_NAME = 'automation-devops-project'
         CONTAINER_NAME = 'automation-devops-app'
+        IMAGE_TAG = "${BUILD_NUMBER}"
         SONAR_SCANNER = tool 'SonarScanner'
     }
 
@@ -65,8 +66,8 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
-                $SONAR_SCANNER/bin/sonar-scanner
-            '''
+                    $SONAR_SCANNER/bin/sonar-scanner
+                    '''
                 }
             }
         }
@@ -82,7 +83,18 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t $IMAGE_NAME:latest .
+                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                '''
+            }
+        }
+
+        stage('Docker Image Info') {
+            steps {
+                sh '''
+                echo "======================================"
+                echo "Docker Images"
+                echo "======================================"
+                docker images | grep $IMAGE_NAME
                 '''
             }
         }
@@ -102,7 +114,7 @@ pipeline {
                 docker run -d \
                     --name $CONTAINER_NAME \
                     -p 3001:3000 \
-                    $IMAGE_NAME:latest
+                    $IMAGE_NAME:$IMAGE_TAG
                 '''
             }
         }
@@ -129,6 +141,7 @@ pipeline {
     post {
         success {
             echo '✅ Docker Deployment Successful'
+            echo "Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
         }
 
         failure {
