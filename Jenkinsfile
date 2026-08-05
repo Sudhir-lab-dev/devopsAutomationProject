@@ -5,7 +5,15 @@ pipeline {
         APP_NAME = 'automation-devops-project'
         IMAGE_NAME = 'automation-devops-project'
         CONTAINER_NAME = 'automation-devops-app'
+
         IMAGE_TAG = "${BUILD_NUMBER}"
+
+        AWS_REGION = 'us-east-1'
+        AWS_ACCOUNT_ID = '218589468002'
+
+        ECR_REPOSITORY = 'automation-devops-project'
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
         SONAR_SCANNER = tool 'SonarScanner'
     }
 
@@ -24,11 +32,12 @@ pipeline {
         stage('Verify Environment') {
             steps {
                 sh '''
-                node -v
-                npm -v
-                git --version
-                docker --version
-                '''
+        node -v
+        npm -v
+        git --version
+        docker --version
+        aws --version
+        '''
             }
         }
 
@@ -80,11 +89,50 @@ pipeline {
             }
         }
 
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-ecr-credentials'
+        ]]) {
+                    sh '''
+            aws ecr get-login-password --region $AWS_REGION \
+            | docker login \
+            --username AWS \
+            --password-stdin $ECR_REGISTRY
+            '''
+        }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh '''
                 docker build -t $IMAGE_NAME:$IMAGE_TAG .
                 '''
+            }
+        }
+
+        stage('Tag Docker Image') {
+            steps {
+                sh '''
+        docker tag \
+        $IMAGE_NAME:$IMAGE_TAG \
+        $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+        docker tag \
+        $IMAGE_NAME:$IMAGE_TAG \
+        $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        '''
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                sh '''
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        '''
             }
         }
 
@@ -94,8 +142,20 @@ pipeline {
                 echo "======================================"
                 echo "Docker Images"
                 echo "======================================"
-                docker images | grep $IMAGE_NAME
+                docker images
+
+                echo ""
+                echo "ECR Image:"
+                echo "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
                 '''
+            }
+        }
+
+        stage('Cleanup Local Images') {
+            steps {
+                sh '''
+        docker image prune -f
+        '''
             }
         }
 
