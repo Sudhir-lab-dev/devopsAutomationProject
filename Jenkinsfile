@@ -93,7 +93,7 @@ pipeline {
             steps {
                 sh '''
                 docker build --pull \
-                -t $IMAGE_NAME:$IMAGE_TAG .
+                  -t $IMAGE_NAME:$IMAGE_TAG .
                 '''
             }
         }
@@ -102,10 +102,10 @@ pipeline {
             steps {
                 sh '''
                 docker tag $IMAGE_NAME:$IMAGE_TAG \
-                $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                    $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
                 docker tag $IMAGE_NAME:$IMAGE_TAG \
-                $ECR_REGISTRY/$ECR_REPOSITORY:latest
+                    $ECR_REGISTRY/$ECR_REPOSITORY:latest
                 '''
             }
         }
@@ -121,44 +121,39 @@ pipeline {
 
         stage('Deploy to Application EC2') {
             steps {
-                sh '''
-                ssh -o BatchMode=yes -o StrictHostKeyChecking=no \
-                $APP_SERVER_USER@$APP_SERVER_HOST << EOF
+                sshagent(credentials: ['app-server-ssh']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_HOST} '
 
-                aws ecr get-login-password --region $AWS_REGION \
-                | docker login \
-                --username AWS \
-                --password-stdin $ECR_REGISTRY
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-                docker pull $ECR_REGISTRY/$ECR_REPOSITORY:latest
+                    docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
-                docker stop $CONTAINER_NAME || true
-                docker rm $CONTAINER_NAME || true
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
 
-                docker run -d \
-                  --name $CONTAINER_NAME \
-                  --restart unless-stopped \
-                  -p 3001:3000 \
-                  $ECR_REGISTRY/$ECR_REPOSITORY:latest
+                    docker run -d \
+                        --name ${CONTAINER_NAME} \
+                        --restart unless-stopped \
+                        -p 3001:3000 \
+                        ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
 
-                sleep 10
+                    sleep 10
 
-                curl http://localhost:3001/api/health
+                    curl --fail http://localhost:3001/api/health
 
-                EOF
-                '''
+                    '
+                    """
+                }
             }
         }
 
         stage('Cleanup Local Images') {
             steps {
                 sh '''
-                docker image rm \
-                $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || true
-
-                docker image rm \
-                $IMAGE_NAME:$IMAGE_TAG || true
-
+                docker image rm $IMAGE_NAME:$IMAGE_TAG || true
+                docker image rm $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || true
                 docker image prune -f
                 '''
             }
@@ -168,14 +163,16 @@ pipeline {
     post {
         success {
             echo '======================================'
-            echo 'Deployment Successful'
+            echo 'CI/CD Pipeline Completed Successfully'
             echo "Image Tag : ${IMAGE_TAG}"
             echo "Application deployed to ${APP_SERVER_HOST}"
             echo '======================================'
         }
 
         failure {
+            echo '======================================'
             echo 'Pipeline Failed'
+            echo '======================================'
         }
 
         always {
