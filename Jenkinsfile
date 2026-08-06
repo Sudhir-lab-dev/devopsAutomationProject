@@ -14,7 +14,7 @@ pipeline {
         ECR_REPOSITORY = 'automation-devops-project'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-        // SONAR_SCANNER = tool 'SonarScanner'
+    // SONAR_SCANNER = tool 'SonarScanner'
     }
 
     options {
@@ -182,18 +182,18 @@ pipeline {
         stage('Health Check') {
             steps {
                 sh '''
-                echo "Waiting for application to start..."
-                sleep 10
+        echo "Waiting for application to start..."
+        sleep 10
 
-                STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://host.docker.internal:3001/api/health)
+        STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:3001/api/health)
 
-                if [ "$STATUS" != "200" ]; then
-                    echo "Application health check failed with HTTP $STATUS"
-                    exit 1
-                fi
+        if [ "$STATUS" != "200" ]; then
+            echo "Application health check failed with HTTP $STATUS"
+            exit 1
+        fi
 
-                echo "Application is healthy."
-                '''
+        echo "Application is healthy."
+        '''
             }
         }
     }
