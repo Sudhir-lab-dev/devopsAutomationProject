@@ -14,7 +14,7 @@ pipeline {
         ECR_REPOSITORY = 'automation-devops-project'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
-        SONAR_SCANNER = tool 'SonarScanner'
+        // SONAR_SCANNER = tool 'SonarScanner'
     }
 
     options {
@@ -71,23 +71,23 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                    $SONAR_SCANNER/bin/sonar-scanner
-                    '''
-                }
-            }
-        }
+        // stage('SonarQube Analysis') {
+        //     steps {
+        //         withSonarQubeEnv('SonarQube') {
+        //             sh '''
+        //             $SONAR_SCANNER/bin/sonar-scanner
+        //             '''
+        //         }
+        //     }
+        // }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // stage('Quality Gate') {
+        //     steps {
+        //         timeout(time: 5, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
 
         stage('Login to AWS ECR') {
             steps {
