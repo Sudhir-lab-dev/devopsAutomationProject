@@ -1,0 +1,18 @@
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Project Details
+project_name = "automation-devops-project"
+environment  = "dev"
+
+# Networking
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+availability_zone  = "us-east-1a"
+
+# EC2 Instance Types
+instance_type_jenkins = "c7i-flex.large"
+instance_type_app     = "c7i-flex.large"
+
+# Replace with your own AWS Key Pair
+key_pair_name = "your-keypair-name"

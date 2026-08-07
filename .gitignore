@@ -12,3 +12,22 @@ logs/
 
 # Build output
 dist/
+
+# -----------------------------
+# Terraform
+# -----------------------------
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/.terraform.lock.hcl
+
+# Crash logs
+terraform/crash.log
+terraform/crash.*.log
+
+# Override files
+terraform/override.tf
+terraform/override.tf.json
+terraform/*_override.tf
+terraform/*_override.tf.json
