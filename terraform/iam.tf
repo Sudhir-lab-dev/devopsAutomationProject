@@ -9,7 +9,6 @@ data "aws_iam_policy_document" "ec2_assume_role" {
     effect = "Allow"
 
     principals {
-
       type = "Service"
 
       identifiers = [
@@ -22,6 +21,7 @@ data "aws_iam_policy_document" "ec2_assume_role" {
     ]
   }
 }
+
 
 #########################################
 # IAM Role
@@ -41,28 +41,44 @@ resource "aws_iam_role" "ec2_role" {
   )
 }
 
+
 #########################################
-# Custom ECR Read Policy
+# ECR Policy - Pull + Push
 #########################################
 
-resource "aws_iam_policy" "ecr_pull_policy" {
+resource "aws_iam_policy" "ecr_policy" {
 
-  name = "${var.project_name}-ecr-pull-policy"
+  name = "${var.project_name}-ecr-policy"
 
   policy = jsonencode({
+
     Version = "2012-10-17"
 
     Statement = [
+
       {
         Effect = "Allow"
 
+        # ECR authentication
+        # Repository read/pull
+        # Repository push
         Action = [
+
+          # Authentication
           "ecr:GetAuthorizationToken",
+
+          # Pull / Read
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchCheckLayerAvailability",
           "ecr:DescribeRepositories",
-          "ecr:DescribeImages"
+          "ecr:DescribeImages",
+
+          # Push
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage"
         ]
 
         Resource = "*"
@@ -73,21 +89,23 @@ resource "aws_iam_policy" "ecr_pull_policy" {
   tags = merge(
     local.common_tags,
     {
-      Name = "${var.project_name}-ecr-pull-policy"
+      Name = "${var.project_name}-ecr-policy"
     }
   )
 }
 
+
 #########################################
-# Attach Policy
+# Attach ECR Policy to EC2 Role
 #########################################
 
-resource "aws_iam_role_policy_attachment" "ecr_pull_attach" {
+resource "aws_iam_role_policy_attachment" "ecr_attach" {
 
   role = aws_iam_role.ec2_role.name
 
-  policy_arn = aws_iam_policy.ecr_pull_policy.arn
+  policy_arn = aws_iam_policy.ecr_policy.arn
 }
+
 
 #########################################
 # Instance Profile
