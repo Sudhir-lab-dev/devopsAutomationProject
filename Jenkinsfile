@@ -12,29 +12,68 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Sudhir-lab-dev/devopsAutomationProject.git'
+                git(
+                    branch: 'main',
+                    url: 'https://github.com/Sudhir-lab-dev/devopsAutomationProject.git',
+                    credentialsId: 'github-credentials'
+                )
+            }
+        }
+
+        stage('Environment Check') {
+            steps {
+                sh '''
+                    echo "Node:"
+                    node -v
+
+                    echo "NPM:"
+                    npm -v
+
+                    echo "Docker:"
+                    docker --version
+
+                    echo "AWS CLI:"
+                    aws --version
+                '''
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                sh '''
+                    npm ci
+                '''
             }
         }
 
         stage('Build Application') {
             steps {
-                sh 'npm run build'
+                sh '''
+                    npm run build
+                '''
+            }
+        }
+
+        stage('Verify Build') {
+            steps {
+                sh '''
+                    echo "Build output:"
+                    ls -la dist/
+                '''
             }
         }
 
         stage('Docker Build') {
             steps {
                 sh '''
+                    echo "Building Docker image..."
+
                     docker build \
-                      -t ${IMAGE_NAME}:latest \
-                      .
+                        -t ${IMAGE_NAME}:latest \
+                        .
+
+                    echo "Docker image built successfully:"
+                    docker images ${IMAGE_NAME}
                 '''
             }
         }
@@ -42,18 +81,25 @@ pipeline {
         stage('ECR Login') {
             steps {
                 sh '''
-                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    echo "Logging in to Amazon ECR..."
+
+                    aws ecr get-login-password \
+                        --region ${AWS_REGION} | \
                     docker login \
-                      --username AWS \
-                      --password-stdin ${ECR_REGISTRY}
+                        --username AWS \
+                        --password-stdin ${ECR_REGISTRY}
                 '''
             }
         }
 
-        stage('Push Image to ECR') {
+        stage('Push to ECR') {
             steps {
                 sh '''
+                    echo "Pushing Docker image to ECR..."
+
                     docker push ${IMAGE_NAME}:latest
+
+                    echo "Docker image pushed successfully!"
                 '''
             }
         }
@@ -66,6 +112,10 @@ pipeline {
 
         failure {
             echo 'Pipeline failed.'
+        }
+
+        always {
+            echo 'Jenkins pipeline execution completed.'
         }
     }
 }
