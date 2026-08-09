@@ -123,11 +123,11 @@ pipeline {
 
                     ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
                         -o StrictHostKeyChecking=yes \
-                        ${APP_USER}@${APP_SERVER} << EOF
+                        ${APP_USER}@${APP_SERVER} "
 
                         set -e
 
-                        echo "Logging in to Amazon ECR..."
+                        echo 'Logging in to Amazon ECR...'
 
                         aws ecr get-login-password \
                             --region ${AWS_REGION} | \
@@ -135,19 +135,19 @@ pipeline {
                             --username AWS \
                             --password-stdin ${ECR_REGISTRY}
 
-                        echo "Pulling latest image..."
+                        echo 'Pulling latest image...'
 
                         docker pull ${ECR_REPOSITORY}:latest
 
-                        echo "Stopping existing container..."
+                        echo 'Stopping existing container...'
 
                         docker stop ${APP_CONTAINER} 2>/dev/null || true
 
-                        echo "Removing existing container..."
+                        echo 'Removing existing container...'
 
                         docker rm ${APP_CONTAINER} 2>/dev/null || true
 
-                        echo "Starting new container..."
+                        echo 'Starting new container...'
 
                         docker run -d \
                             --name ${APP_CONTAINER} \
@@ -155,18 +155,17 @@ pipeline {
                             -p ${APP_PORT}:${APP_PORT} \
                             ${ECR_REPOSITORY}:latest
 
-                        echo "Waiting for application to start..."
+                        echo 'Waiting for application to start...'
 
                         sleep 10
 
-                        echo "Container status:"
+                        echo 'Container status:'
 
                         docker ps \
-                            --filter "name=${APP_CONTAINER}"
+                            --filter name=${APP_CONTAINER}
 
-                        echo "Deployment completed."
-
-                    EOF
+                        echo 'Deployment completed successfully.'
+                    "
                 '''
             }
         }
@@ -184,7 +183,7 @@ pipeline {
                         "curl -f http://localhost:${APP_PORT}/api/health"
 
                     echo ""
-                    echo "Health check passed."
+                    echo "Health check passed successfully."
                 '''
             }
         }
@@ -192,12 +191,17 @@ pipeline {
 
     post {
         success {
+            echo '======================================'
             echo 'CI/CD pipeline completed successfully!'
             echo "Application deployed to ${APP_SERVER}:${APP_PORT}"
+            echo '======================================'
         }
 
         failure {
-            echo 'CI/CD pipeline failed. Check the stage logs.'
+            echo '======================================'
+            echo 'CI/CD pipeline failed.'
+            echo 'Check the stage logs.'
+            echo '======================================'
         }
 
         always {
