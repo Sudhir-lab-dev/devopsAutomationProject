@@ -5,10 +5,13 @@ pipeline {
         AWS_REGION = 'us-east-1'
 
         ECR_REGISTRY = '218589468002.dkr.ecr.us-east-1.amazonaws.com'
-
         ECR_REPOSITORY_NAME = 'automation-devops-project'
-
         ECR_REPOSITORY = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}"
+
+        APP_SERVER = '10.0.1.65'
+        APP_USER = 'ec2-user'
+        APP_CONTAINER = 'automation-app'
+        APP_PORT = '3000'
     }
 
     stages {
@@ -22,6 +25,10 @@ pipeline {
         stage('Verify Environment') {
             steps {
                 sh '''
+                    echo "======================================"
+                    echo "Environment"
+                    echo "======================================"
+
                     echo "Node:"
                     node --version
 
@@ -33,6 +40,9 @@ pipeline {
 
                     echo "AWS:"
                     aws --version
+
+                    echo "Git:"
+                    git --version
                 '''
             }
         }
@@ -58,55 +68,140 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh '''
-            docker build \
-                -t $ECR_REPOSITORY:jenkins-$BUILD_NUMBER \
-                -t $ECR_REPOSITORY:latest \
-                .
-        '''
+                    echo "======================================"
+                    echo "Building Docker Image"
+                    echo "======================================"
+
+                    docker build \
+                        -t ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER} \
+                        -t ${ECR_REPOSITORY}:latest \
+                        .
+
+                    echo "Docker build completed successfully."
+                '''
             }
         }
 
         stage('Push Image to ECR') {
             steps {
                 sh '''
-            echo "Logging in to Amazon ECR..."
+                    echo "======================================"
+                    echo "Login to Amazon ECR"
+                    echo "======================================"
 
-            aws ecr get-login-password --region ${AWS_REGION} | \
-            docker login \
-            --username AWS \
-            --password-stdin ${ECR_REGISTRY}
+                    aws ecr get-login-password \
+                        --region ${AWS_REGION} | \
+                    docker login \
+                        --username AWS \
+                        --password-stdin ${ECR_REGISTRY}
 
-            echo "Tagging Docker images..."
+                    echo "======================================"
+                    echo "Push Build Image"
+                    echo "======================================"
 
-            docker tag ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER} \
-                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:jenkins-${BUILD_NUMBER}
+                    docker push \
+                        ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}
 
-            docker tag ${ECR_REPOSITORY}:latest \
-                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:latest
+                    echo "======================================"
+                    echo "Push Latest Image"
+                    echo "======================================"
 
-            echo "Pushing build image..."
+                    docker push \
+                        ${ECR_REPOSITORY}:latest
 
-            docker push \
-                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:jenkins-${BUILD_NUMBER}
+                    echo "ECR push completed successfully."
+                '''
+            }
+        }
 
-            echo "Pushing latest image..."
+        stage('Deploy to Application EC2') {
+            steps {
+                sh '''
+                    echo "======================================"
+                    echo "Deploying Application"
+                    echo "======================================"
 
-            docker push \
-                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:latest
+                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=yes \
+                        ${APP_USER}@${APP_SERVER} << EOF
 
-            echo "ECR push completed successfully!"
-        '''
+                        set -e
+
+                        echo "Logging in to Amazon ECR..."
+
+                        aws ecr get-login-password \
+                            --region ${AWS_REGION} | \
+                        docker login \
+                            --username AWS \
+                            --password-stdin ${ECR_REGISTRY}
+
+                        echo "Pulling latest image..."
+
+                        docker pull ${ECR_REPOSITORY}:latest
+
+                        echo "Stopping existing container..."
+
+                        docker stop ${APP_CONTAINER} 2>/dev/null || true
+
+                        echo "Removing existing container..."
+
+                        docker rm ${APP_CONTAINER} 2>/dev/null || true
+
+                        echo "Starting new container..."
+
+                        docker run -d \
+                            --name ${APP_CONTAINER} \
+                            --restart unless-stopped \
+                            -p ${APP_PORT}:${APP_PORT} \
+                            ${ECR_REPOSITORY}:latest
+
+                        echo "Waiting for application to start..."
+
+                        sleep 10
+
+                        echo "Container status:"
+
+                        docker ps \
+                            --filter "name=${APP_CONTAINER}"
+
+                        echo "Deployment completed."
+
+                    EOF
+                '''
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                    echo "======================================"
+                    echo "Application Health Check"
+                    echo "======================================"
+
+                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=yes \
+                        ${APP_USER}@${APP_SERVER} \
+                        "curl -f http://localhost:${APP_PORT}/api/health"
+
+                    echo ""
+                    echo "Health check passed."
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'CI pipeline completed successfully!'
+            echo 'CI/CD pipeline completed successfully!'
+            echo "Application deployed to ${APP_SERVER}:${APP_PORT}"
         }
 
         failure {
-            echo 'CI pipeline failed. Check the stage logs.'
+            echo 'CI/CD pipeline failed. Check the stage logs.'
+        }
+
+        always {
+            echo "Pipeline finished. Build number: ${BUILD_NUMBER}"
         }
     }
 }
