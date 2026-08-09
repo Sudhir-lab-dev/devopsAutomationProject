@@ -3,7 +3,12 @@ pipeline {
 
     environment {
         AWS_REGION = 'us-east-1'
-        ECR_REPOSITORY = 'automation-devops-project'
+
+        ECR_REGISTRY = '218589468002.dkr.ecr.us-east-1.amazonaws.com'
+
+        ECR_REPOSITORY_NAME = 'automation-devops-project'
+
+        ECR_REPOSITORY = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}"
     }
 
     stages {
@@ -57,6 +62,39 @@ pipeline {
                 -t $ECR_REPOSITORY:jenkins-$BUILD_NUMBER \
                 -t $ECR_REPOSITORY:latest \
                 .
+        '''
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                sh '''
+            echo "Logging in to Amazon ECR..."
+
+            aws ecr get-login-password --region ${AWS_REGION} | \
+            docker login \
+            --username AWS \
+            --password-stdin ${ECR_REGISTRY}
+
+            echo "Tagging Docker images..."
+
+            docker tag ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER} \
+                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:jenkins-${BUILD_NUMBER}
+
+            docker tag ${ECR_REPOSITORY}:latest \
+                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:latest
+
+            echo "Pushing build image..."
+
+            docker push \
+                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:jenkins-${BUILD_NUMBER}
+
+            echo "Pushing latest image..."
+
+            docker push \
+                ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:latest
+
+            echo "ECR push completed successfully!"
         '''
             }
         }
