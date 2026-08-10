@@ -164,6 +164,15 @@ pipeline {
                         docker ps \
                             --filter name=${APP_CONTAINER}
 
+                        echo 'Checking container is running...'
+
+                        if ! docker ps --format '{{.Names}}' | grep -q '^${APP_CONTAINER}$'; then
+                            echo 'ERROR: Application container is not running.'
+                            echo 'Container logs:'
+                            docker logs ${APP_CONTAINER} || true
+                            exit 1
+                        fi
+
                         echo 'Deployment completed successfully.'
                     "
                 '''
@@ -184,6 +193,35 @@ pipeline {
 
                     echo ""
                     echo "Health check passed successfully."
+                '''
+            }
+        }
+
+        stage('Cleanup Old Docker Images') {
+            steps {
+                sh '''
+                    echo "======================================"
+                    echo "Cleaning Old Docker Images"
+                    echo "======================================"
+
+                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=yes \
+                        ${APP_USER}@${APP_SERVER} "
+
+                        echo 'Docker disk usage before cleanup:'
+                        docker system df
+
+                        echo 'Removing unused Docker images...'
+
+                        docker image prune -af
+
+                        echo 'Docker disk usage after cleanup:'
+                        docker system df
+
+                        echo 'Disk usage:'
+                        df -h
+
+                    "
                 '''
             }
         }
