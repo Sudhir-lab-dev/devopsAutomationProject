@@ -25,18 +25,18 @@ export async function runDemoFormBot(
         await page.locator("#my-text-id").fill(request.firstName);
 
         // Fill last name
-        const lastNameInput: any = page.locator('input[name="my-password"]');
+        // const lastNameInput: any = page.locator('input[name="my-password"]');
 
-        if (await lastNameInput.count()) {
-            await lastNameInput.fill(request.lastName);
-        }
+        // if (await lastNameInput.count()) {
+        //     await lastNameInput.fill(request.lastName);
+        // }
 
-        // Fill email
-        const emailInput: any = page.locator('textarea[name="my-textarea"]');
+        // // Fill email
+        // const emailInput: any = page.locator('textarea[name="my-textarea"]');
 
-        if (await emailInput.count()) {
-            await emailInput.fill(request.email);
-        }
+        // if (await emailInput.count()) {
+        //     await emailInput.fill(request.email);
+        // }
 
         const screenshot = getScreenshotPath();
 
