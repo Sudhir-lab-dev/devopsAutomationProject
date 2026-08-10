@@ -21,6 +21,7 @@
     "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.2.0",
     "@types/supertest": "^7.2.1",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
@@ -36,8 +37,10 @@
     "typescript-eslint": "^8.65.0"
   },
   "dependencies": {
+    "csv-parse": "^7.0.2",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "multer": "^2.2.0",
     "puppeteer": "^25.4.0",
     "winston": "^3.19.0"
   }

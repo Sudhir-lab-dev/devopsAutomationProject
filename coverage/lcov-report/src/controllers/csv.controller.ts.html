@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/utils/file.util.ts</title>
+    <title>Code coverage report for src/controllers/csv.controller.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> file.util.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/controllers</a> csv.controller.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -96,20 +96,27 @@
 <a name='L31'></a><a href='#L31'>31</a>
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -117,7 +124,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -125,44 +131,65 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import fs from "fs";</span>
-<span class="cstat-no" title="statement not covered" >import path from "path";</span>
-<span class="cstat-no" title="statement not covered" >import crypto from "crypto";</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Request, Response } from 'express';
+<span class="cstat-no" title="statement not covered" >import fs from 'fs';</span>
+<span class="cstat-no" title="statement not covered" >import { parseCsvFile } from '../services/csv.service';</span>
 &nbsp;
-const SCREENSHOT_DIRECTORY = <span class="cstat-no" title="statement not covered" >path.join(process.cwd(), "screenshots");</span>
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >uploadCsv(</span>
+    req: Request,
+    res: Response
+): Promise&lt;void&gt; {
 &nbsp;
-// Create screenshots directory if it doesn't exist
-<span class="cstat-no" title="statement not covered" >if (!fs.existsSync(SCREENSHOT_DIRECTORY)) {</span>
-<span class="cstat-no" title="statement not covered" >  fs.mkdirSync(SCREENSHOT_DIRECTORY, { recursive: true });</span>
-}
+<span class="cstat-no" title="statement not covered" >    try {</span>
 &nbsp;
-/**
- * Generates a unique screenshot file path.
- */
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >g</span>etScreenshotPath(</span>): {
-  fileName: string;
-  filePath: string;
-  createdAt: Date;
-} {
-  const timestamp = <span class="cstat-no" title="statement not covered" >new Date().toISOString().replace(/[:.]/g, "-");</span>
+<span class="cstat-no" title="statement not covered" >        if (!req.file) {</span>
+<span class="cstat-no" title="statement not covered" >            res.status(400).json({</span>
+                success: false,
+                message: 'CSV file is required',
+            });
 &nbsp;
-  const uniqueId = <span class="cstat-no" title="statement not covered" >crypto.randomUUID();</span>
+<span class="cstat-no" title="statement not covered" >            return;</span>
+        }
 &nbsp;
-  const fileName = <span class="cstat-no" title="statement not covered" >`${timestamp}-${uniqueId}.png`;</span>
+        const filePath = <span class="cstat-no" title="statement not covered" >req.file.path;</span>
 &nbsp;
-  const filePath = <span class="cstat-no" title="statement not covered" >path.join(SCREENSHOT_DIRECTORY, fileName);</span>
+        const records = <span class="cstat-no" title="statement not covered" >parseCsvFile(filePath);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return {</span>
-    fileName,
-    filePath,
-    createdAt: new Date(),
-  };
-}
-&nbsp;</pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >        fs.unlinkSync(filePath);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        res.status(200).json({</span>
+            success: true,
+            message: 'CSV uploaded and parsed successfully',
+            totalRecords: records.length,
+            records,
+        });
+&nbsp;
+    } catch (error) {
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        console.error('CSV processing error:', error);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        res.status(500).json({</span>
+            success: false,
+            message: 'Failed to process CSV file',
+        });
+    }
+}</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
