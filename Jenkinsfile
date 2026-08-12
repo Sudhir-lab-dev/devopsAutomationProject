@@ -193,7 +193,7 @@ pipeline {
                     ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
                         -o StrictHostKeyChecking=yes \
                         ${APP_USER}@${APP_SERVER} \
-                        "curl -f http://localhost:${APP_PORT}/health"
+                        "curl -f http://localhost:${APP_PORT}/api/health"
 
                     echo ""
                     echo "Health check passed successfully."
