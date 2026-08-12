@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/api", healthRoutes);
+app.use("/api/health", healthRoutes);
 app.use("/api/automation", automationRoutes);
 app.use('/api/csv', csvRoutes);
 
