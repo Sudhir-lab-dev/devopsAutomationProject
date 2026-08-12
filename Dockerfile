@@ -1,15 +1,16 @@
 # -----------------------------
 # Stage 1 - Builder
 # -----------------------------
+
 FROM node:22-bookworm AS builder
 
 WORKDIR /app
 
-# Copy package files first (better caching)
+# Copy package files first for better layer caching
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies)
-RUN npm install
+# Install dependencies
+RUN npm ci
 
 # Copy application source
 COPY . .
@@ -17,9 +18,11 @@ COPY . .
 # Compile TypeScript
 RUN npm run build
 
+
 # -----------------------------
 # Stage 2 - Runtime
 # -----------------------------
+
 FROM node:22-bookworm
 
 WORKDIR /app
@@ -54,8 +57,8 @@ RUN apt-get update && apt-get install -y \
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm install --omit=dev
+# Install production dependencies only
+RUN npm ci --omit=dev
 
 # Copy compiled application
 COPY --from=builder /app/dist ./dist

@@ -4,7 +4,7 @@
 
 resource "aws_instance" "application" {
 
-  ami                  = data.aws_ami.amazon_linux.id
+  ami                  = "ami-0bdc7d025135d7b49"
   instance_type        = var.instance_type_app
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name

@@ -39,3 +39,22 @@ output "public_subnet_id" {
   description = "Public Subnet ID"
   value       = aws_subnet.public.id
 }
+
+#########################################
+# S3 Outputs
+#########################################
+
+output "screenshots_bucket_name" {
+
+  description = "S3 bucket used for automation screenshots"
+
+  value = aws_s3_bucket.screenshots.bucket
+}
+
+
+output "screenshots_bucket_arn" {
+
+  description = "ARN of the screenshot S3 bucket"
+
+  value = aws_s3_bucket.screenshots.arn
+}

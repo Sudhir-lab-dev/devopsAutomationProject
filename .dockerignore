@@ -5,3 +5,6 @@ screenshots
 .git
 .gitignore
 .env
+.env.local
+Dockerfile
+docker-compose.yml

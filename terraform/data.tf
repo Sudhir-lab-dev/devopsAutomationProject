@@ -28,3 +28,5 @@ data "aws_ami" "amazon_linux" {
     ]
   }
 }
+
+data "aws_caller_identity" "current" {}

@@ -117,3 +117,58 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
   role = aws_iam_role.ec2_role.name
 }
+
+#########################################
+# S3 Screenshot Policy
+#########################################
+
+resource "aws_iam_policy" "s3_screenshot_policy" {
+  name = "automation-devops-project-s3-screenshot-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Action = [
+          "s3:ListBucket"
+        ]
+
+        Resource = aws_s3_bucket.screenshots.arn
+      },
+      {
+        Effect = "Allow"
+
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+
+        Resource = "${aws_s3_bucket.screenshots.arn}/*"
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "automation-devops-project-s3-screenshot-policy"
+    Project     = "automation-devops-project"
+    Environment = "dev"
+    ManagedBy   = "Terraform"
+    Owner       = "Sudhir"
+  }
+}
+
+
+#########################################
+# Attach S3 Policy to EC2 Role
+#########################################
+
+resource "aws_iam_role_policy_attachment" "s3_screenshot_attach" {
+
+  role = aws_iam_role.ec2_role.name
+
+  policy_arn = aws_iam_policy.s3_screenshot_policy.arn
+}
