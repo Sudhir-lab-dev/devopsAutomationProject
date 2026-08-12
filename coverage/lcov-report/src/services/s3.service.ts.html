@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/utils/file.util.ts</title>
+    <title>Code coverage report for src/services/s3.service.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,20 +19,20 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> file.util.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/services</a> s3.service.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>0/17</span>
             </div>
         
             
@@ -96,7 +96,30 @@
 <a name='L31'></a><a href='#L31'>31</a>
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -104,24 +127,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -129,40 +139,90 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import fs from "fs";</span>
-<span class="cstat-no" title="statement not covered" >import path from "path";</span>
-<span class="cstat-no" title="statement not covered" >import crypto from "crypto";</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import {</span>
+    S3Client,
+    PutObjectCommand,
+} from "@aws-sdk/client-s3";
+<span class="cstat-no" title="statement not covered" >import fs from "fs";</span>
+<span class="cstat-no" title="statement not covered" >import logger from "../utils/logger";</span>
 &nbsp;
-const SCREENSHOT_DIRECTORY = <span class="cstat-no" title="statement not covered" >path.join(process.cwd(), "screenshots");</span>
+const AWS_REGION = <span class="cstat-no" title="statement not covered" >process.env.AWS_REGION || "us-east-1";</span>
 &nbsp;
-// Create screenshots directory if it doesn't exist
-<span class="cstat-no" title="statement not covered" >if (!fs.existsSync(SCREENSHOT_DIRECTORY)) {</span>
-<span class="cstat-no" title="statement not covered" >  fs.mkdirSync(SCREENSHOT_DIRECTORY, { recursive: true });</span>
-}
+const S3_BUCKET =
+<span class="cstat-no" title="statement not covered" >    process.env.S3_SCREENSHOT_BUCKET ||</span>
+    "automation-devops-project-screenshots-218589468002";
 &nbsp;
-/**
- * Generates a unique screenshot file path.
- */
-<span class="cstat-no" title="statement not covered" >export function <span class="fstat-no" title="function not covered" >g</span>etScreenshotPath(</span>): {
-  fileName: string;
-  filePath: string;
-  createdAt: Date;
-} {
-  const timestamp = <span class="cstat-no" title="statement not covered" >new Date().toISOString().replace(/[:.]/g, "-");</span>
+const s3Client = <span class="cstat-no" title="statement not covered" >new S3Client({</span>
+    region: AWS_REGION,
+});
 &nbsp;
-  const uniqueId = <span class="cstat-no" title="statement not covered" >crypto.randomUUID();</span>
+<span class="cstat-no" title="statement not covered" >export a</span>sync function <span class="fstat-no" title="function not covered" >uploadScreenshotToS3(</span>
+    filePath: string,
+    fileName: string
+): Promise&lt;{
+    s3Key: string;
+    s3Uri: string;
+}&gt; {
+    const s3Key = <span class="cstat-no" title="statement not covered" >`screenshots/${fileName}`;</span>
 &nbsp;
-  const fileName = <span class="cstat-no" title="statement not covered" >`${timestamp}-${uniqueId}.png`;</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >        logger.info(`Uploading screenshot to S3: ${s3Key}`);</span>
 &nbsp;
-  const filePath = <span class="cstat-no" title="statement not covered" >path.join(SCREENSHOT_DIRECTORY, fileName);</span>
+        const fileStream = <span class="cstat-no" title="statement not covered" >fs.createReadStream(filePath);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return {</span>
-    fileName,
-    filePath,
-    createdAt: new Date(),
-  };
-}
-&nbsp;</pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >        await s3Client.send(</span>
+            new PutObjectCommand({
+                Bucket: S3_BUCKET,
+                Key: s3Key,
+                Body: fileStream,
+                ContentType: "image/png",
+            })
+        );
+&nbsp;
+        const s3Uri = <span class="cstat-no" title="statement not covered" >`s3://${S3_BUCKET}/${s3Key}`;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        logger.info(`Screenshot uploaded successfully: ${s3Uri}`);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        return {</span>
+            s3Key,
+            s3Uri,
+        };
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >        logger.error(`S3 screenshot upload failed: ${error}`);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        throw error;</span>
+    }
+}</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
