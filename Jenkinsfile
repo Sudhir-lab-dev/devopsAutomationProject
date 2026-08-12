@@ -17,13 +17,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/Sudhir-lab-dev/devopsAutomationProject.git'
-            }
-        }
-
         stage('Verify Environment') {
             steps {
                 sh '''
