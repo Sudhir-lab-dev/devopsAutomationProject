@@ -8,10 +8,12 @@ pipeline {
         ECR_REPOSITORY_NAME = 'automation-devops-project'
         ECR_REPOSITORY = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}"
 
-        APP_SERVER = '10.0.1.65'
+        APP_SERVER = '10.0.1.109'
         APP_USER = 'ec2-user'
         APP_CONTAINER = 'automation-app'
         APP_PORT = '3000'
+
+        S3_BUCKET_NAME = 'automation-devops-project-screenshots-218589468002'
     }
 
     stages {
@@ -153,6 +155,8 @@ pipeline {
                             --name ${APP_CONTAINER} \
                             --restart unless-stopped \
                             -p ${APP_PORT}:${APP_PORT} \
+                            -e AWS_REGION=${AWS_REGION} \
+                            -e S3_BUCKET_NAME=${S3_BUCKET_NAME} \
                             ${ECR_REPOSITORY}:latest
 
                         echo 'Waiting for application to start...'
@@ -189,7 +193,7 @@ pipeline {
                     ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
                         -o StrictHostKeyChecking=yes \
                         ${APP_USER}@${APP_SERVER} \
-                        "curl -f http://localhost:${APP_PORT}/api/health"
+                        "curl -f http://localhost:${APP_PORT}/health"
 
                     echo ""
                     echo "Health check passed successfully."
