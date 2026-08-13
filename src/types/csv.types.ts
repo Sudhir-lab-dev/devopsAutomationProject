@@ -3,3 +3,8 @@ export interface CsvAutomationRow {
     lastName: string;
     email: string;
 }
+
+export interface CsvValidationResult {
+    valid: boolean;
+    errors: string[];
+}
