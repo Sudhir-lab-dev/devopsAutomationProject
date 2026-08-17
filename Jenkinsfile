@@ -109,6 +109,96 @@ pipeline {
             }
         }
 
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+            echo "======================================"
+            echo "Deploying Application to EKS"
+            echo "======================================"
+
+            echo "EKS Image:"
+            echo "${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
+
+            ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                -o StrictHostKeyChecking=yes \
+                ${APP_USER}@${APP_SERVER} "
+
+                set -e
+
+                echo 'Updating EKS deployment image...'
+
+                kubectl set image deployment/automation-app \
+                    automation-app=${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}
+
+                echo 'Waiting for rollout to complete...'
+
+                kubectl rollout status deployment/automation-app \
+                    --timeout=5m
+
+                echo 'Deployment rollout successful.'
+
+                echo 'Current deployment image:'
+
+                kubectl get deployment automation-app \
+                    -o jsonpath='{.spec.template.spec.containers[0].image}'
+
+                echo ''
+
+            "
+        '''
+            }
+        }
+
+        stage('Verify EKS Deployment') {
+            steps {
+                sh '''
+            echo "======================================"
+            echo "Verifying EKS Deployment"
+            echo "======================================"
+
+            EXPECTED_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
+
+            echo "Expected image:"
+            echo "${EXPECTED_IMAGE}"
+
+            ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                -o StrictHostKeyChecking=yes \
+                ${APP_USER}@${APP_SERVER} "
+
+                set -e
+
+                echo 'Deployment:'
+                kubectl get deployment automation-app -o wide
+
+                echo ''
+                echo 'Pod:'
+                kubectl get pods -l app=automation-app -o wide
+
+                echo ''
+                echo 'Running image:'
+
+                ACTUAL_IMAGE=\$(kubectl get deployment automation-app \
+                    -o jsonpath='{.spec.template.spec.containers[0].image}')
+
+                echo \${ACTUAL_IMAGE}
+
+                echo ''
+                echo 'Expected image:'
+                echo '${EXPECTED_IMAGE}'
+
+                if [ \\"\${ACTUAL_IMAGE}\\" != \\"${EXPECTED_IMAGE}\\" ]; then
+                    echo 'ERROR: EKS is not running the expected Jenkins image.'
+                    exit 1
+                fi
+
+                echo ''
+                echo 'EKS image verification passed.'
+
+            "
+        '''
+            }
+        }
+
         stage('Deploy to Application EC2') {
             steps {
                 sh '''

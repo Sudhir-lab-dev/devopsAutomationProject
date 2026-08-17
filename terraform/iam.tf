@@ -172,3 +172,49 @@ resource "aws_iam_role_policy_attachment" "s3_screenshot_attach" {
 
   policy_arn = aws_iam_policy.s3_screenshot_policy.arn
 }
+
+#########################################
+# EKS Access Policy for Jenkins
+#########################################
+
+resource "aws_iam_policy" "jenkins_eks_policy" {
+
+  name = "${var.project_name}-jenkins-eks-policy"
+
+  policy = jsonencode({
+
+    Version = "2012-10-17"
+
+    Statement = [
+
+      {
+        Effect = "Allow"
+
+        Action = [
+          "eks:DescribeCluster"
+        ]
+
+        Resource = aws_eks_cluster.main.arn
+      }
+    ]
+  })
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-jenkins-eks-policy"
+    }
+  )
+}
+
+
+#########################################
+# Attach EKS Policy to EC2 Role
+#########################################
+
+resource "aws_iam_role_policy_attachment" "jenkins_eks_attach" {
+
+  role = aws_iam_role.ec2_role.name
+
+  policy_arn = aws_iam_policy.jenkins_eks_policy.arn
+}
