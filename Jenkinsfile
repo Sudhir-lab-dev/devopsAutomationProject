@@ -8,6 +8,12 @@ pipeline {
         ECR_REPOSITORY_NAME = 'automation-devops-project'
         ECR_REPOSITORY = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}"
 
+        // Jenkins EC2
+        // This EC2 has kubectl + EKS kubeconfig
+        EKS_SERVER = '10.0.1.159'
+        EKS_USER = 'ec2-user'
+
+        // Application EC2
         APP_SERVER = '10.0.1.109'
         APP_USER = 'ec2-user'
         APP_CONTAINER = 'automation-app'
@@ -17,6 +23,7 @@ pipeline {
     }
 
     stages {
+
         stage('Verify Environment') {
             steps {
                 sh '''
@@ -42,11 +49,13 @@ pipeline {
             }
         }
 
+
         stage('Install Dependencies') {
             steps {
                 sh 'npm ci'
             }
         }
+
 
         stage('Run Tests') {
             steps {
@@ -54,11 +63,13 @@ pipeline {
             }
         }
 
+
         stage('Build Application') {
             steps {
                 sh 'npm run build'
             }
         }
+
 
         stage('Docker Build') {
             steps {
@@ -76,6 +87,7 @@ pipeline {
                 '''
             }
         }
+
 
         stage('Push Image to ECR') {
             steps {
@@ -109,95 +121,168 @@ pipeline {
             }
         }
 
+
+        /*
+         * ==========================================================
+         * DEPLOY TO EKS
+         *
+         * Jenkins EC2:
+         * 10.0.1.159
+         *
+         * This EC2 has:
+         * - kubectl
+         * - EKS kubeconfig
+         * - EKS access
+         *
+         * IMPORTANT:
+         * We deploy the BUILD_NUMBER image, NOT latest.
+         *
+         * Example:
+         * jenkins-10
+         * jenkins-11
+         * jenkins-12
+         * ==========================================================
+         */
+
         stage('Deploy to EKS') {
             steps {
                 sh '''
-            echo "======================================"
-            echo "Deploying Application to EKS"
-            echo "======================================"
+                    echo "======================================"
+                    echo "Deploying Application to EKS"
+                    echo "======================================"
 
-            echo "EKS Image:"
-            echo "${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
+                    EKS_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
 
-            ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
-                -o StrictHostKeyChecking=yes \
-                ${APP_USER}@${APP_SERVER} "
+                    echo "EKS Server:"
+                    echo "${EKS_SERVER}"
 
-                set -e
+                    echo "EKS Image:"
+                    echo "${EKS_IMAGE}"
 
-                echo 'Updating EKS deployment image...'
+                    echo "Updating EKS deployment image..."
 
-                kubectl set image deployment/automation-app \
-                    automation-app=${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}
+                    ssh \
+                        -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=yes \
+                        ${EKS_USER}@${EKS_SERVER} \
+                        "
+                        set -e
 
-                echo 'Waiting for rollout to complete...'
+                        echo 'Connected to EKS administration server.'
 
-                kubectl rollout status deployment/automation-app \
-                    --timeout=5m
+                        echo 'Checking kubectl...'
+                        which kubectl
+                        kubectl version --client
 
-                echo 'Deployment rollout successful.'
+                        echo 'Checking EKS cluster access...'
+                        kubectl get nodes
 
-                echo 'Current deployment image:'
+                        echo 'Updating deployment image...'
 
-                kubectl get deployment automation-app \
-                    -o jsonpath='{.spec.template.spec.containers[0].image}'
+                        kubectl set image deployment/automation-app \
+                            automation-app=${EKS_IMAGE}
 
-                echo ''
+                        echo 'Waiting for rollout to complete...'
 
-            "
-        '''
+                        kubectl rollout status deployment/automation-app \
+                            --timeout=5m
+
+                        echo 'Deployment rollout successful.'
+
+                        echo 'Current deployment image:'
+
+                        kubectl get deployment automation-app \
+                            -o jsonpath='{.spec.template.spec.containers[0].image}'
+
+                        echo ''
+
+                        echo 'EKS deployment completed successfully.'
+                        "
+                '''
             }
         }
+
+
+        /*
+         * ==========================================================
+         * VERIFY EKS DEPLOYMENT
+         * ==========================================================
+         */
 
         stage('Verify EKS Deployment') {
             steps {
                 sh '''
-            echo "======================================"
-            echo "Verifying EKS Deployment"
-            echo "======================================"
+                    echo "======================================"
+                    echo "Verifying EKS Deployment"
+                    echo "======================================"
 
-            EXPECTED_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
+                    EXPECTED_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
 
-            echo "Expected image:"
-            echo "${EXPECTED_IMAGE}"
+                    echo "EKS Server:"
+                    echo "${EKS_SERVER}"
 
-            ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
-                -o StrictHostKeyChecking=yes \
-                ${APP_USER}@${APP_SERVER} "
+                    echo "Expected image:"
+                    echo "${EXPECTED_IMAGE}"
 
-                set -e
+                    ssh \
+                        -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=yes \
+                        ${EKS_USER}@${EKS_SERVER} \
+                        "
+                        set -e
 
-                echo 'Deployment:'
-                kubectl get deployment automation-app -o wide
+                        echo '======================================'
+                        echo 'Deployment'
+                        echo '======================================'
 
-                echo ''
-                echo 'Pod:'
-                kubectl get pods -l app=automation-app -o wide
+                        kubectl get deployment automation-app -o wide
 
-                echo ''
-                echo 'Running image:'
+                        echo ''
+                        echo '======================================'
+                        echo 'Pods'
+                        echo '======================================'
 
-                ACTUAL_IMAGE=\$(kubectl get deployment automation-app \
-                    -o jsonpath='{.spec.template.spec.containers[0].image}')
+                        kubectl get pods \
+                            -l app=automation-app \
+                            -o wide
 
-                echo \${ACTUAL_IMAGE}
+                        echo ''
+                        echo '======================================'
+                        echo 'Running Image'
+                        echo '======================================'
 
-                echo ''
-                echo 'Expected image:'
-                echo '${EXPECTED_IMAGE}'
+                        ACTUAL_IMAGE=\\\$(kubectl get deployment automation-app \
+                            -o jsonpath='{.spec.template.spec.containers[0].image}')
 
-                if [ \\"\${ACTUAL_IMAGE}\\" != \\"${EXPECTED_IMAGE}\\" ]; then
-                    echo 'ERROR: EKS is not running the expected Jenkins image.'
-                    exit 1
-                fi
+                        echo \\\${ACTUAL_IMAGE}
 
-                echo ''
-                echo 'EKS image verification passed.'
+                        echo ''
+                        echo 'Expected Image:'
+                        echo '${EXPECTED_IMAGE}'
 
-            "
-        '''
+                        if [ \\\\"\${ACTUAL_IMAGE}\\\\" != \\\\"${EXPECTED_IMAGE}\\\\" ]; then
+                            echo 'ERROR: EKS is not running the expected Jenkins image.'
+                            exit 1
+                        fi
+
+                        echo ''
+                        echo 'EKS image verification passed.'
+                        "
+                '''
             }
         }
+
+
+        /*
+         * ==========================================================
+         * DEPLOY TO APPLICATION EC2
+         *
+         * IMPORTANT:
+         * This remains 10.0.1.109.
+         *
+         * This is NOT the EKS administration server.
+         * ==========================================================
+         */
 
         stage('Deploy to Application EC2') {
             steps {
@@ -206,10 +291,14 @@ pipeline {
                     echo "Deploying Application"
                     echo "======================================"
 
-                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
-                        -o StrictHostKeyChecking=yes \
-                        ${APP_USER}@${APP_SERVER} "
+                    echo "Application Server:"
+                    echo "${APP_SERVER}"
 
+                    ssh \
+                        -i /var/lib/jenkins/.ssh/id_ed25519 \
+                        -o StrictHostKeyChecking=yes \
+                        ${APP_USER}@${APP_SERVER} \
+                        "
                         set -e
 
                         echo 'Logging in to Amazon ECR...'
@@ -260,11 +349,20 @@ pipeline {
                             exit 1
                         fi
 
-                        echo 'Deployment completed successfully.'
-                    "
+                        echo 'Application deployment completed successfully.'
+                        "
                 '''
             }
         }
+
+
+        /*
+         * ==========================================================
+         * HEALTH CHECK
+         *
+         * Runs against Application EC2.
+         * ==========================================================
+         */
 
         stage('Health Check') {
             steps {
@@ -273,7 +371,11 @@ pipeline {
                     echo "Application Health Check"
                     echo "======================================"
 
-                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                    echo "Application Server:"
+                    echo "${APP_SERVER}"
+
+                    ssh \
+                        -i /var/lib/jenkins/.ssh/id_ed25519 \
                         -o StrictHostKeyChecking=yes \
                         ${APP_USER}@${APP_SERVER} \
                         "curl -f http://localhost:${APP_PORT}/api/health"
@@ -284,6 +386,13 @@ pipeline {
             }
         }
 
+
+        /*
+         * ==========================================================
+         * CLEANUP APPLICATION EC2
+         * ==========================================================
+         */
+
         stage('Cleanup Old Docker Images') {
             steps {
                 sh '''
@@ -291,10 +400,11 @@ pipeline {
                     echo "Cleaning Old Docker Images"
                     echo "======================================"
 
-                    ssh -i /var/lib/jenkins/.ssh/id_ed25519 \
+                    ssh \
+                        -i /var/lib/jenkins/.ssh/id_ed25519 \
                         -o StrictHostKeyChecking=yes \
-                        ${APP_USER}@${APP_SERVER} "
-
+                        ${APP_USER}@${APP_SERVER} \
+                        "
                         echo 'Docker disk usage before cleanup:'
                         docker system df
 
@@ -307,18 +417,27 @@ pipeline {
 
                         echo 'Disk usage:'
                         df -h
-
-                    "
+                        "
                 '''
             }
         }
     }
 
+
+    /*
+     * ==========================================================
+     * POST ACTIONS
+     * ==========================================================
+     */
+
     post {
+
         success {
             echo '======================================'
             echo 'CI/CD pipeline completed successfully!'
-            echo "Application deployed to ${APP_SERVER}:${APP_PORT}"
+            echo "EKS deployment server: ${EKS_SERVER}"
+            echo "Application server: ${APP_SERVER}:${APP_PORT}"
+            echo "Build image: ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
             echo '======================================'
         }
 
