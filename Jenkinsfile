@@ -8,92 +8,246 @@ pipeline {
         ECR_REPOSITORY_NAME = 'automation-devops-project'
         ECR_REPOSITORY = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}"
 
-        // Jenkins EC2
-        // This EC2 has kubectl + EKS kubeconfig
-        EKS_SERVER = '10.0.1.159'
-        EKS_USER = 'ec2-user'
+        EKS_CLUSTER_NAME = 'automation-devops-project-eks'
 
-        // Application EC2
-        APP_SERVER = '10.0.1.109'
-        APP_USER = 'ec2-user'
-        APP_CONTAINER = 'automation-app'
-        APP_PORT = '3000'
-
-        S3_BUCKET_NAME = 'automation-devops-project-screenshots-218589468002'
+        K8S_NAMESPACE = 'default'
+        K8S_DEPLOYMENT = 'automation-app'
+        K8S_CONTAINER = 'automation-app'
+        K8S_SERVICE = 'automation-app'
     }
 
     stages {
+        /*
+         * ==========================================================
+         * VERIFY JENKINS ENVIRONMENT
+         * ==========================================================
+         */
 
         stage('Verify Environment') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
-                    echo "Environment"
+                    echo "Jenkins Environment"
                     echo "======================================"
 
+                    echo "Hostname:"
+                    hostname
+
+                    echo ""
+                    echo "Running User:"
+                    whoami
+
+                    echo ""
                     echo "Node:"
                     node --version
 
+                    echo ""
                     echo "NPM:"
                     npm --version
 
+                    echo ""
                     echo "Docker:"
                     docker --version
 
+                    echo ""
                     echo "AWS:"
                     aws --version
 
+                    echo ""
                     echo "Git:"
                     git --version
+
+                    echo ""
+                    echo "kubectl:"
+                    kubectl version --client
+
+                    echo ""
+                    echo "======================================"
+                    echo "AWS Identity"
+                    echo "======================================"
+
+                    aws sts get-caller-identity
+
+                    echo ""
+                    echo "======================================"
+                    echo "Kubernetes Context"
+                    echo "======================================"
+
+                    kubectl config current-context
                 '''
             }
         }
 
+        /*
+         * ==========================================================
+         * VERIFY EKS ACCESS
+         * ==========================================================
+         */
+
+        stage('Verify EKS Access') {
+            steps {
+                sh '''
+                    set -e
+
+                    echo "======================================"
+                    echo "Verifying EKS Access"
+                    echo "======================================"
+
+                    echo "Expected EKS Cluster:"
+                    echo "${EKS_CLUSTER_NAME}"
+
+                    echo ""
+                    echo "Current Kubernetes Context:"
+                    CURRENT_CONTEXT=$(kubectl config current-context)
+
+                    echo "${CURRENT_CONTEXT}"
+
+                    EXPECTED_CONTEXT="arn:aws:eks:${AWS_REGION}:218589468002:cluster/${EKS_CLUSTER_NAME}"
+
+                    if [ "${CURRENT_CONTEXT}" != "${EXPECTED_CONTEXT}" ]; then
+                        echo ""
+                        echo "ERROR: Jenkins is using the wrong Kubernetes context."
+                        echo "Expected:"
+                        echo "${EXPECTED_CONTEXT}"
+                        echo "Actual:"
+                        echo "${CURRENT_CONTEXT}"
+                        exit 1
+                    fi
+
+                    echo ""
+                    echo "Kubernetes context verification passed."
+
+                    echo ""
+                    echo "======================================"
+                    echo "EKS Nodes"
+                    echo "======================================"
+
+                    kubectl get nodes -o wide
+
+                    echo ""
+                    echo "======================================"
+                    echo "Current Application Deployment"
+                    echo "======================================"
+
+                    kubectl get deployment ${K8S_DEPLOYMENT} \
+                        -n ${K8S_NAMESPACE}
+                '''
+            }
+        }
+
+        /*
+         * ==========================================================
+         * INSTALL DEPENDENCIES
+         * ==========================================================
+         */
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                sh '''
+                    set -e
+
+                    echo "======================================"
+                    echo "Installing Dependencies"
+                    echo "======================================"
+
+                    npm ci
+                '''
             }
         }
 
+        /*
+         * ==========================================================
+         * TEST
+         * ==========================================================
+         */
 
         stage('Run Tests') {
             steps {
-                sh 'npm test'
+                sh '''
+                    set -e
+
+                    echo "======================================"
+                    echo "Running Tests"
+                    echo "======================================"
+
+                    npm test
+                '''
             }
         }
 
+        /*
+         * ==========================================================
+         * TYPESCRIPT BUILD
+         * ==========================================================
+         */
 
         stage('Build Application') {
             steps {
-                sh 'npm run build'
+                sh '''
+                    set -e
+
+                    echo "======================================"
+                    echo "Building TypeScript Application"
+                    echo "======================================"
+
+                    npm run build
+
+                    echo ""
+                    echo "TypeScript build completed successfully."
+                '''
             }
         }
 
+        /*
+         * ==========================================================
+         * DOCKER BUILD
+         * ==========================================================
+         */
 
         stage('Docker Build') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
                     echo "Building Docker Image"
                     echo "======================================"
 
+                    EKS_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
+
+                    echo "Build Image:"
+                    echo "${EKS_IMAGE}"
+
                     docker build \
-                        -t ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER} \
-                        -t ${ECR_REPOSITORY}:latest \
+                        -t "${EKS_IMAGE}" \
+                        -t "${ECR_REPOSITORY}:latest" \
                         .
 
-                    echo "Docker build completed successfully."
+                    echo ""
+                    echo "======================================"
+                    echo "Docker Images"
+                    echo "======================================"
+
+                    docker images "${ECR_REPOSITORY}"
                 '''
             }
         }
 
+        /*
+         * ==========================================================
+         * PUSH TO ECR
+         * ==========================================================
+         */
 
         stage('Push Image to ECR') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
-                    echo "Login to Amazon ECR"
+                    echo "Logging in to Amazon ECR"
                     echo "======================================"
 
                     aws ecr get-login-password \
@@ -102,106 +256,104 @@ pipeline {
                         --username AWS \
                         --password-stdin ${ECR_REGISTRY}
 
+                    echo ""
+                    echo "ECR login successful."
+
+                    echo ""
                     echo "======================================"
-                    echo "Push Build Image"
+                    echo "Pushing Build Image"
                     echo "======================================"
 
                     docker push \
                         ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}
 
+                    echo ""
+                    echo "Build image pushed successfully."
+
+                    echo ""
                     echo "======================================"
-                    echo "Push Latest Image"
+                    echo "Pushing Latest Image"
                     echo "======================================"
 
                     docker push \
                         ${ECR_REPOSITORY}:latest
 
+                    echo ""
+                    echo "Latest image pushed successfully."
+
+                    echo ""
                     echo "ECR push completed successfully."
                 '''
             }
         }
 
-
         /*
          * ==========================================================
          * DEPLOY TO EKS
          *
-         * Jenkins EC2:
-         * 10.0.1.159
-         *
-         * This EC2 has:
-         * - kubectl
-         * - EKS kubeconfig
-         * - EKS access
-         *
          * IMPORTANT:
-         * We deploy the BUILD_NUMBER image, NOT latest.
+         * Jenkins is already running on the EKS administration
+         * EC2 instance.
          *
-         * Example:
-         * jenkins-10
-         * jenkins-11
-         * jenkins-12
+         * Therefore NO SSH is required.
+         * kubectl communicates directly with EKS.
          * ==========================================================
          */
 
         stage('Deploy to EKS') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
                     echo "Deploying Application to EKS"
                     echo "======================================"
 
                     EKS_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
 
-                    echo "EKS Server:"
-                    echo "${EKS_SERVER}"
+                    echo "Cluster:"
+                    echo "${EKS_CLUSTER_NAME}"
 
-                    echo "EKS Image:"
+                    echo ""
+                    echo "Deployment:"
+                    echo "${K8S_DEPLOYMENT}"
+
+                    echo ""
+                    echo "Container:"
+                    echo "${K8S_CONTAINER}"
+
+                    echo ""
+                    echo "New Image:"
                     echo "${EKS_IMAGE}"
 
-                    echo "Updating EKS deployment image..."
+                    echo ""
+                    echo "======================================"
+                    echo "Updating Deployment Image"
+                    echo "======================================"
 
-                    ssh \
-                        -i /var/lib/jenkins/.ssh/id_ed25519 \
-                        -o StrictHostKeyChecking=yes \
-                        ${EKS_USER}@${EKS_SERVER} \
-                        "
-                        set -e
+                    kubectl set image \
+                        deployment/${K8S_DEPLOYMENT} \
+                        ${K8S_CONTAINER}=${EKS_IMAGE} \
+                        -n ${K8S_NAMESPACE}
 
-                        echo 'Connected to EKS administration server.'
+                    echo ""
+                    echo "Deployment image updated."
 
-                        echo 'Checking kubectl...'
-                        which kubectl
-                        kubectl version --client
+                    echo ""
+                    echo "======================================"
+                    echo "Waiting for Kubernetes Rollout"
+                    echo "======================================"
 
-                        echo 'Checking EKS cluster access...'
-                        kubectl get nodes
+                    kubectl rollout status \
+                        deployment/${K8S_DEPLOYMENT} \
+                        -n ${K8S_NAMESPACE} \
+                        --timeout=5m
 
-                        echo 'Updating deployment image...'
-
-                        kubectl set image deployment/automation-app \
-                            automation-app=${EKS_IMAGE}
-
-                        echo 'Waiting for rollout to complete...'
-
-                        kubectl rollout status deployment/automation-app \
-                            --timeout=5m
-
-                        echo 'Deployment rollout successful.'
-
-                        echo 'Current deployment image:'
-
-                        kubectl get deployment automation-app \
-                            -o jsonpath='{.spec.template.spec.containers[0].image}'
-
-                        echo ''
-
-                        echo 'EKS deployment completed successfully.'
-                        "
+                    echo ""
+                    echo "EKS rollout completed successfully."
                 '''
             }
         }
-
 
         /*
          * ==========================================================
@@ -212,217 +364,221 @@ pipeline {
         stage('Verify EKS Deployment') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
                     echo "Verifying EKS Deployment"
                     echo "======================================"
 
                     EXPECTED_IMAGE="${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
 
-                    echo "EKS Server:"
-                    echo "${EKS_SERVER}"
-
-                    echo "Expected image:"
+                    echo "Expected Image:"
                     echo "${EXPECTED_IMAGE}"
 
-                    ssh \
-                        -i /var/lib/jenkins/.ssh/id_ed25519 \
-                        -o StrictHostKeyChecking=yes \
-                        ${EKS_USER}@${EKS_SERVER} \
-                        "
-                        set -e
+                    echo ""
+                    echo "======================================"
+                    echo "Deployment"
+                    echo "======================================"
 
-                        echo '======================================'
-                        echo 'Deployment'
-                        echo '======================================'
+                    kubectl get deployment ${K8S_DEPLOYMENT} \
+                        -n ${K8S_NAMESPACE} \
+                        -o wide
 
-                        kubectl get deployment automation-app -o wide
+                    echo ""
+                    echo "======================================"
+                    echo "Pods"
+                    echo "======================================"
 
-                        echo ''
-                        echo '======================================'
-                        echo 'Pods'
-                        echo '======================================'
+                    kubectl get pods \
+                        -l app=${K8S_DEPLOYMENT} \
+                        -n ${K8S_NAMESPACE} \
+                        -o wide
 
-                        kubectl get pods \
-                            -l app=automation-app \
-                            -o wide
+                    echo ""
+                    echo "======================================"
+                    echo "Running Image"
+                    echo "======================================"
 
-                        echo ''
-                        echo '======================================'
-                        echo 'Running Image'
-                        echo '======================================'
+                    ACTUAL_IMAGE=$(kubectl get deployment ${K8S_DEPLOYMENT} \
+                        -n ${K8S_NAMESPACE} \
+                        -o jsonpath='{.spec.template.spec.containers[0].image}')
 
-                        ACTUAL_IMAGE=\\\$(kubectl get deployment automation-app \
-                            -o jsonpath='{.spec.template.spec.containers[0].image}')
+                    echo "Actual Image:"
+                    echo "${ACTUAL_IMAGE}"
 
-                        echo \\\${ACTUAL_IMAGE}
+                    echo ""
+                    echo "Expected Image:"
+                    echo "${EXPECTED_IMAGE}"
 
-                        echo ''
-                        echo 'Expected Image:'
-                        echo '${EXPECTED_IMAGE}'
+                    if [ "${ACTUAL_IMAGE}" != "${EXPECTED_IMAGE}" ]; then
+                        echo ""
+                        echo "ERROR: EKS is not running the expected Jenkins image."
+                        exit 1
+                    fi
 
-                        if [ \\\\"\${ACTUAL_IMAGE}\\\\" != \\\\"${EXPECTED_IMAGE}\\\\" ]; then
-                            echo 'ERROR: EKS is not running the expected Jenkins image.'
-                            exit 1
-                        fi
+                    echo ""
+                    echo "EKS image verification passed."
 
-                        echo ''
-                        echo 'EKS image verification passed.'
-                        "
+                    echo ""
+                    echo "======================================"
+                    echo "Pod Status"
+                    echo "======================================"
+
+                    kubectl get pods \
+                        -l app=${K8S_DEPLOYMENT} \
+                        -n ${K8S_NAMESPACE}
+
+                    echo ""
+                    echo "EKS deployment verification completed successfully."
                 '''
             }
         }
-
 
         /*
          * ==========================================================
-         * DEPLOY TO APPLICATION EC2
-         *
-         * IMPORTANT:
-         * This remains 10.0.1.109.
-         *
-         * This is NOT the EKS administration server.
+         * VERIFY KUBERNETES SERVICE
          * ==========================================================
          */
 
-        stage('Deploy to Application EC2') {
+        stage('Verify Kubernetes Service') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
-                    echo "Deploying Application"
+                    echo "Verifying Kubernetes Service"
                     echo "======================================"
 
-                    echo "Application Server:"
-                    echo "${APP_SERVER}"
+                    kubectl get svc ${K8S_SERVICE} \
+                        -n ${K8S_NAMESPACE} \
+                        -o wide
 
-                    ssh \
-                        -i /var/lib/jenkins/.ssh/id_ed25519 \
-                        -o StrictHostKeyChecking=yes \
-                        ${APP_USER}@${APP_SERVER} \
-                        "
-                        set -e
+                    echo ""
+                    echo "Service Type:"
 
-                        echo 'Logging in to Amazon ECR...'
+                    SERVICE_TYPE=$(kubectl get svc ${K8S_SERVICE} \
+                        -n ${K8S_NAMESPACE} \
+                        -o jsonpath='{.spec.type}')
 
-                        aws ecr get-login-password \
-                            --region ${AWS_REGION} | \
-                        docker login \
-                            --username AWS \
-                            --password-stdin ${ECR_REGISTRY}
+                    echo "${SERVICE_TYPE}"
 
-                        echo 'Pulling latest image...'
+                    if [ "${SERVICE_TYPE}" != "LoadBalancer" ]; then
+                        echo ""
+                        echo "ERROR: Expected Service type LoadBalancer."
+                        exit 1
+                    fi
 
-                        docker pull ${ECR_REPOSITORY}:latest
-
-                        echo 'Stopping existing container...'
-
-                        docker stop ${APP_CONTAINER} 2>/dev/null || true
-
-                        echo 'Removing existing container...'
-
-                        docker rm ${APP_CONTAINER} 2>/dev/null || true
-
-                        echo 'Starting new container...'
-
-                        docker run -d \
-                            --name ${APP_CONTAINER} \
-                            --restart unless-stopped \
-                            -p ${APP_PORT}:${APP_PORT} \
-                            -e AWS_REGION=${AWS_REGION} \
-                            -e S3_BUCKET_NAME=${S3_BUCKET_NAME} \
-                            ${ECR_REPOSITORY}:latest
-
-                        echo 'Waiting for application to start...'
-
-                        sleep 10
-
-                        echo 'Container status:'
-
-                        docker ps \
-                            --filter name=${APP_CONTAINER}
-
-                        echo 'Checking container is running...'
-
-                        if ! docker ps --format '{{.Names}}' | grep -q '^${APP_CONTAINER}$'; then
-                            echo 'ERROR: Application container is not running.'
-                            echo 'Container logs:'
-                            docker logs ${APP_CONTAINER} || true
-                            exit 1
-                        fi
-
-                        echo 'Application deployment completed successfully.'
-                        "
+                    echo ""
+                    echo "Kubernetes LoadBalancer Service verified."
                 '''
             }
         }
 
+        /*
+         * ==========================================================
+         * GET LOAD BALANCER
+         * ==========================================================
+         */
+
+        stage('Get Load Balancer') {
+            steps {
+                script {
+                    def loadBalancer = sh(
+                        script: '''
+                            kubectl get svc ${K8S_SERVICE} \
+                                -n ${K8S_NAMESPACE} \
+                                -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    if (!loadBalancer) {
+                        error('Load Balancer hostname was not found.')
+                    }
+
+                    env.LOAD_BALANCER_HOST = loadBalancer
+
+                    echo ''
+                    echo '======================================'
+                    echo 'AWS Load Balancer'
+                    echo '======================================'
+
+                    echo "${env.LOAD_BALANCER_HOST}"
+                }
+            }
+        }
 
         /*
          * ==========================================================
          * HEALTH CHECK
          *
-         * Runs against Application EC2.
+         * Retry because the AWS Load Balancer may need some time
+         * to recognize the newly rolled-out pod.
          * ==========================================================
          */
 
         stage('Health Check') {
             steps {
                 sh '''
+                    set -e
+
                     echo "======================================"
                     echo "Application Health Check"
                     echo "======================================"
 
-                    echo "Application Server:"
-                    echo "${APP_SERVER}"
+                    HEALTH_URL="http://${LOAD_BALANCER_HOST}/api/health"
 
-                    ssh \
-                        -i /var/lib/jenkins/.ssh/id_ed25519 \
-                        -o StrictHostKeyChecking=yes \
-                        ${APP_USER}@${APP_SERVER} \
-                        "curl -f http://localhost:${APP_PORT}/api/health"
+                    echo "Health URL:"
+                    echo "${HEALTH_URL}"
 
                     echo ""
-                    echo "Health check passed successfully."
-                '''
-            }
-        }
 
+                    MAX_ATTEMPTS=12
+                    ATTEMPT=1
 
-        /*
-         * ==========================================================
-         * CLEANUP APPLICATION EC2
-         * ==========================================================
-         */
+                    while [ ${ATTEMPT} -le ${MAX_ATTEMPTS} ]; do
 
-        stage('Cleanup Old Docker Images') {
-            steps {
-                sh '''
+                        echo "Health check attempt ${ATTEMPT}/${MAX_ATTEMPTS}"
+
+                        if curl \
+                            --fail \
+                            --silent \
+                            --show-error \
+                            --max-time 15 \
+                            "${HEALTH_URL}"; then
+
+                            echo ""
+                            echo ""
+                            echo "======================================"
+                            echo "HEALTH CHECK PASSED"
+                            echo "======================================"
+
+                            exit 0
+                        fi
+
+                        echo ""
+                        echo "Application not ready yet."
+
+                        if [ ${ATTEMPT} -lt ${MAX_ATTEMPTS} ]; then
+                            echo "Waiting 10 seconds..."
+                            sleep 10
+                        fi
+
+                        ATTEMPT=$((ATTEMPT + 1))
+                    done
+
+                    echo ""
                     echo "======================================"
-                    echo "Cleaning Old Docker Images"
+                    echo "HEALTH CHECK FAILED"
                     echo "======================================"
 
-                    ssh \
-                        -i /var/lib/jenkins/.ssh/id_ed25519 \
-                        -o StrictHostKeyChecking=yes \
-                        ${APP_USER}@${APP_SERVER} \
-                        "
-                        echo 'Docker disk usage before cleanup:'
-                        docker system df
+                    echo "Application did not become healthy within the expected time."
 
-                        echo 'Removing unused Docker images...'
-
-                        docker image prune -af
-
-                        echo 'Docker disk usage after cleanup:'
-                        docker system df
-
-                        echo 'Disk usage:'
-                        df -h
-                        "
+                    exit 1
                 '''
             }
         }
     }
-
 
     /*
      * ==========================================================
@@ -431,21 +587,73 @@ pipeline {
      */
 
     post {
-
         success {
-            echo '======================================'
-            echo 'CI/CD pipeline completed successfully!'
-            echo "EKS deployment server: ${EKS_SERVER}"
-            echo "Application server: ${APP_SERVER}:${APP_PORT}"
-            echo "Build image: ${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}"
-            echo '======================================'
+            echo """
+======================================
+CI/CD PIPELINE SUCCESS
+======================================
+
+GitHub
+   ↓
+Jenkins EC2
+   ↓
+npm test
+   ↓
+TypeScript build
+   ↓
+Docker build
+   ↓
+Amazon ECR
+   ↓
+Amazon EKS
+   ↓
+Kubernetes rollout
+   ↓
+AWS Load Balancer
+   ↓
+Application health check
+
+======================================
+DEPLOYMENT INFORMATION
+======================================
+
+Build:
+${BUILD_NUMBER}
+
+Docker Image:
+${ECR_REPOSITORY}:jenkins-${BUILD_NUMBER}
+
+EKS Cluster:
+${EKS_CLUSTER_NAME}
+
+Load Balancer:
+${LOAD_BALANCER_HOST}
+
+Health Endpoint:
+http://${LOAD_BALANCER_HOST}/api/health
+
+======================================
+Deployment completed successfully.
+======================================
+"""
         }
 
         failure {
-            echo '======================================'
-            echo 'CI/CD pipeline failed.'
-            echo 'Check the stage logs.'
-            echo '======================================'
+            echo """
+======================================
+CI/CD PIPELINE FAILED
+======================================
+
+Build:
+${BUILD_NUMBER}
+
+EKS Cluster:
+${EKS_CLUSTER_NAME}
+
+Check the failed stage above.
+
+======================================
+"""
         }
 
         always {
