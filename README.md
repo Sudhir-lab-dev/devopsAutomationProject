@@ -1004,31 +1004,32 @@ Application health endpoint
 
 
 Architecture Diagram
-<img src="./docs/architecture.png" alt="Alt Text" width="500">
+<img width="1536" height="1024" alt="architecture" src="https://github.com/user-attachments/assets/3c03948d-390b-44b8-beaf-d8ec318941ce" />
 
 Jenkins Pipeline
-<img src="./docs/jenkins-pipeline.png" alt="Alt Text" width="500">
+<img width="1900" height="267" alt="jenkins-pipeline" src="https://github.com/user-attachments/assets/05205826-acf0-4740-804c-d30f83cf4c67" />
 
 Jenkins Pipeline Success
-<img src="./docs/jenkins-success.png" alt="Alt Text" width="500">
+<img width="378" height="711" alt="jenkins-success" src="https://github.com/user-attachments/assets/928277f0-3e10-4cb6-b92f-d190177b3309" />
 
 Postman CSV Puppeteer Automation
-<img src="./docs/puppeteer-screenshot.png" alt="Alt Text" width="500">
+<img width="1366" height="768" alt="puppeteer-screenshot" src="https://github.com/user-attachments/assets/0ca69bb2-2f61-41dd-845d-b71dd52fd936" />
 
 CSV Processing Response
-<img src="./docs/response-postman.png" alt="Alt Text" width="500">
+<img width="1370" height="769" alt="response-postman" src="https://github.com/user-attachments/assets/e2028fc7-cb56-4c00-a244-d0df32285061" />
 
 Amazon S3 Screenshot
-<img src="./docs/s3-screenshots.png" alt="Alt Text" width="500">
+<img width="1497" height="659" alt="s3-screenshots" src="https://github.com/user-attachments/assets/5e1863d2-9615-4196-8b98-76c9f4021e4b" />
 
 EKS Deployment
-<img src="./docs/eks-cluster.png" alt="Alt Text" width="500">
+<img width="906" height="336" alt="eks-cluster" src="https://github.com/user-attachments/assets/4ca10fc7-1259-4164-b978-86505b780b9e" />
 
 Amazon ECR
-<img src="./docs/ecr-images.png" alt="Alt Text" width="500">
+<img width="1489" height="497" alt="ecr-images" src="https://github.com/user-attachments/assets/c07d50a9-16a9-4e6a-bb9e-90d34eb24443" />
 
 Application Health
-<img src="./docs/application-health.png" alt="Alt Text" width="500">
+<img width="1012" height="65" alt="application-health" src="https://github.com/user-attachments/assets/12caa0ff-b0de-4bd9-9486-70a01ed1d6cf" />
+
 
 
 
