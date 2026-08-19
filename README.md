@@ -1004,22 +1004,31 @@ Application health endpoint
 
 
 Architecture Diagram
+<img src="./docs/architecture.png" alt="Alt Text" width="500">
 
 Jenkins Pipeline
+<img src="./docs/jenkins-pipeline.png" alt="Alt Text" width="500">
 
-Postman CSV Automation
+Jenkins Pipeline Success
+<img src="./docs/jenkins-success.png" alt="Alt Text" width="500">
+
+Postman CSV Puppeteer Automation
+<img src="./docs/puppeteer-screenshot.png" alt="Alt Text" width="500">
 
 CSV Processing Response
+<img src="./docs/response-postman.png" alt="Alt Text" width="500">
 
 Amazon S3 Screenshot
+<img src="./docs/s3-screenshots.png" alt="Alt Text" width="500">
 
 EKS Deployment
-
-Kubernetes Pods
+<img src="./docs/eks-cluster.png" alt="Alt Text" width="500">
 
 Amazon ECR
+<img src="./docs/ecr-images.png" alt="Alt Text" width="500">
 
 Application Health
+<img src="./docs/application-health.png" alt="Alt Text" width="500">
 
 
 
